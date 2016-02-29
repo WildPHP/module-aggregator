@@ -27,7 +27,7 @@ use GuzzleHttp\Exception\ConnectException;
 
 class AUR implements IAggregatorSource
 {
-	protected $apiUri = 'https://aur.archlinux.org/rpc.php';
+	protected $apiUri = 'https://aur.archlinux.org/rpc/';
 	protected $pkgBaseUri = 'https://aur.archlinux.org/packages/';
 
 	/**
@@ -51,14 +51,14 @@ class AUR implements IAggregatorSource
 	 */
 	public function buildUriWithParts($parts = [])
 	{
-		$uri = $this->apiUri;
+		$uri = $this->apiUri . '?v=5';
 
 		$pieces = $this->buildPartsForUri($parts);
 
 		if (empty($pieces))
 			return $uri;
 
-		$uri .= '?' . implode('&', $pieces);
+		$uri .= '&' . implode('&', $pieces);
 
 		return $uri;
 	}
@@ -101,7 +101,5 @@ class AUR implements IAggregatorSource
 		{
 			return false;
 		}
-
-
 	}
 }
