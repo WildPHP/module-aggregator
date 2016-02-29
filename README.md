@@ -1,4 +1,4 @@
-# Wiki Module
+# Aggregator Module
 [![Build Status](https://scrutinizer-ci.com/g/WildPHP/module-aggregator/badges/build.png?b=master)](https://scrutinizer-ci.com/g/WildPHP/module-aggregator/build-status/master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/WildPHP/module-aggregator/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/WildPHP/module-aggregator/?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/wildphp/module-aggregator/v/stable)](https://packagist.org/packages/wildphp/module-aggregator)
