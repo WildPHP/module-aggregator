@@ -48,7 +48,7 @@ class Wikipedia implements IAggregatorSource
 		$url .= '&format=json&redirects=resolve';
 
 		// And of course the search term.
-		$url .= '&search=' . $searchTerm;
+		$url .= '&search=' . urlencode($searchTerm);
 
 		return $url;
 	}
