@@ -87,11 +87,13 @@ class ArchPkg implements IAggregatorSource
 			$repo = $resultset['repo'];
 			$arch = $resultset['arch'];
 			$pkgname = $resultset['pkgname'];
-			$pkgdesc = $resultset['pkgdesc'];
+			$pkgver = $resultset['pkgver'] . '-' . $resultset['pkgrel'];
+			$pkgdesc = $resultset['pkgdesc'] . ' -- version ' . $pkgver;
 			$uri = $this->buildPackageUri($repo, $arch, $pkgname);
+			$title = $pkgname;
 
 			$searchResult = new SearchResult();
-			$searchResult->setTitle($pkgname);
+			$searchResult->setTitle($title);
 			$searchResult->setDescription($pkgdesc);
 			$searchResult->setUri($uri);
 			$finalresults[] = $searchResult;

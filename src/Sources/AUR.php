@@ -80,9 +80,15 @@ class AUR implements IAggregatorSource
 		foreach ($results['results'] as $resultset)
 		{
 			$searchResult = new SearchResult();
-			$searchResult->setTitle($resultset['Name']);
-			$searchResult->setDescription($resultset['Description']);
-			$searchResult->setUri($this->pkgBaseUri . $resultset['PackageBase']);
+			$pkgname = $resultset['Name'];
+			$pkgver = $resultset['Version'];
+			$pkgdesc = $resultset['Description'] . ' -- version ' . $pkgver;
+			$pkguri = $this->pkgBaseUri . $resultset['PackageBase'];
+			$title = $pkgname;
+
+			$searchResult->setTitle($title);
+			$searchResult->setDescription($pkgdesc);
+			$searchResult->setUri($pkguri);
 			$finalresults[] = $searchResult;
 		}
 		return $finalresults;
