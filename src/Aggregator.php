@@ -31,7 +31,7 @@ class Aggregator extends BaseModule
 	 protected $sourcePool = null;
 
 	/**
-	 * Set up the module.
+	 * @return void
 	 */
 	public function setup()
 	{
@@ -41,19 +41,13 @@ class Aggregator extends BaseModule
 		$this->getEventEmitter()->on('irc.command.lssources', [$this, 'lsSourcesCommand']);
 		$this->getEventEmitter()->on('irc.command', [$this, 'keywordListener']);
 
-		include(__DIR__ . '/IAggregatorSource.php');
-		include(__DIR__ . '/SourcePool.php');
-		include(__DIR__ . '/SearchResult.php');
-
-		include(__DIR__ . '/Sources/Wikipedia.php');
-		include(__DIR__ . '/Sources/ArchWiki.php');
-		include(__DIR__ . '/Sources/AUR.php');
-		include(__DIR__ . '/Sources/ArchPkg.php');
-
 		$sourcePool = new SourcePool($this);
 		$this->setSourcePool($sourcePool);
 	}
 
+	/**
+	 * @return void
+	 */
 	public function initSourcePool()
 	{
 		$sourcePool = $this->getSourcePool();
@@ -78,7 +72,6 @@ class Aggregator extends BaseModule
 	}
 
 	/**
-	 * The lssources command
 	 * @param IrcDataObject $data The data received.
 	 */
 	public function lsSourcesCommand($command, $params, IrcDataObject $data)
@@ -91,6 +84,12 @@ class Aggregator extends BaseModule
 		$this->replyToChannel($originChannel, 'Available sources: ' . implode(', ', $keys));
 	}
 
+	/**
+	 * @param string $source
+	 * @param string $search
+	 * @param string $channel
+	 * @param string $user
+	 */
 	protected function handleResult($source, $search, $channel, $user = '')
 	{
 		$sourcePool = $this->getSourcePool();
@@ -106,7 +105,7 @@ class Aggregator extends BaseModule
 
 		if (!$results)
 		{
-			$this->replyToChannel($channel, 'I had no search results for that query.');
+			$this->replyToChannel($channel, 'I had no results for that query.');
 			return;
 		}
 		$result = $this->getBestResult($search, $results);
@@ -130,11 +129,17 @@ class Aggregator extends BaseModule
 
 		if (!$paramData)
 		{
-			$this->replyToChannel($originChannel, 'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
+			$this->replyToChannel($originChannel,
+				'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
 			return;
 		}
 
-		$this->handleResult($paramData['source'], $paramData['search'], $originChannel, $paramData['user']);
+		$this->handleResult(
+			$paramData['source'],
+			$paramData['search'],
+			$originChannel,
+			$paramData['user']
+		);
 	}
 
 	public function keywordListener($command, $params, IrcDataObject $data)
@@ -149,11 +154,17 @@ class Aggregator extends BaseModule
 
 		if (empty($params) || empty($paramData))
 		{
-			$this->replyToChannel($originChannel, 'You need to specify a search term. Usage: ' . $command . ' [search term] (@ [user])');
+			$this->replyToChannel($originChannel,
+				'Invalid parameters. Usage: ' . $command . ' [search term] (@ [user])');
 			return;
 		}
 
-		$this->handleResult($command, $paramData['search'], $originChannel, $paramData['user']);
+		$this->handleResult(
+			$command,
+			$paramData['search'],
+			$originChannel,
+			$paramData['user']
+		);
 	}
 
 	public function getBestResult($comparedTo, $results)
@@ -173,7 +184,6 @@ class Aggregator extends BaseModule
 			if ($lev == 0)
 			{
 				$bestResult = $result;
-				$shortestFound = 0;
 				break;
 			}
 
