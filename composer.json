@@ -9,10 +9,7 @@
         }
     ],
     "require": {
-        "wildphp/module-ircconnection": "^2.0",
-        "wildphp/module-configuration": "^2.0",
-        "wildphp/module-commandparser": "^2.0",
-        "wildphp/api": "^1.0"
+        "guzzlehttp/guzzle": "^6.2"
     },
     "autoload": {
         "psr-4": {

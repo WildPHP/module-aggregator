@@ -20,10 +20,10 @@
 
 namespace WildPHP\Modules\Aggregator\Sources;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use WildPHP\Modules\Aggregator\IAggregatorSource;
 use WildPHP\Modules\Aggregator\SearchResult;
-use WildPHP\API\Remote;
-use GuzzleHttp\Exception\ConnectException;
 
 class AUR implements IAggregatorSource
 {
@@ -69,8 +69,9 @@ class AUR implements IAggregatorSource
 	 */
 	public function executeQuery($uri)
 	{
-		$bodyResource = Remote::getUriBody($uri);
-		$contents = $bodyResource->getContents();
+		$client = new Client(['timeout' => 2.0]);
+		$response = $client->get($uri);
+		$contents = $response->getBody();
 		$results = json_decode($contents, true);
 
 		if (!$results || !array_key_exists('results', $results))
@@ -103,7 +104,7 @@ class AUR implements IAggregatorSource
 			$results = $this->executeQuery($uri);
 			return $results;
 		}
-		catch (ConnectException $e)
+		catch (RequestException $e)
 		{
 			return false;
 		}

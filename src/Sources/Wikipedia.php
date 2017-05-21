@@ -2,7 +2,7 @@
 
 /*
 	WildPHP - a modular and easily extendable IRC bot written in PHP
-	Copyright (C) 2015 WildPHP
+	Copyright (C) 2016 WildPHP
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@
 
 namespace WildPHP\Modules\Aggregator\Sources;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use WildPHP\Modules\Aggregator\IAggregatorSource;
 use WildPHP\Modules\Aggregator\SearchResult;
-use WildPHP\API\Remote;
-use GuzzleHttp\Exception\ConnectException;
 
 class Wikipedia implements IAggregatorSource
 {
@@ -31,7 +31,7 @@ class Wikipedia implements IAggregatorSource
 
 	protected function buildSearchUri($searchTerm, $limitResults = false)
 	{
-		$seachTerm = urlencode($searchTerm);
+		$searchTerm = urlencode($searchTerm);
 		$url = $this->apiUri;
 
 		// use the OpenSearch API
@@ -48,15 +48,16 @@ class Wikipedia implements IAggregatorSource
 		$url .= '&format=json&redirects=resolve';
 
 		// And of course the search term.
-		$url .= '&search=' . urlencode($searchTerm);
+		$url .= '&search=' . $searchTerm;
 
 		return $url;
 	}
 
 	protected function getSearchResults($searchUri)
 	{
-		$bodyResource = Remote::getUriBody($searchUri);
-		$contents = $bodyResource->getContents();
+		$client = new Client(['timeout' => 2.0]);
+		$response = $client->get($searchUri);
+		$contents = $response->getBody();
 		$result = json_decode($contents);
 
 		$results = [];
@@ -91,7 +92,7 @@ class Wikipedia implements IAggregatorSource
 			$results = $this->getSearchResults($uri);
 			return $results;
 		}
-		catch (ConnectException $e)
+		catch (RequestException $e)
 		{
 			return false;
 		}

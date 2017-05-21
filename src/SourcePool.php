@@ -20,35 +20,37 @@
 
 namespace WildPHP\Modules\Aggregator;
 
+use WildPHP\Core\Configuration\Configuration;
+use WildPHP\Core\Logger\Logger;
+
 class SourcePool
 {
 	/**
 	 * @var IAggregatorSource[]
 	 */
-	 protected $sources = [];
+	protected $sources = [];
 
-	 /**
-	  * @var string[]
-	  */
-	 protected $loadedSources = [];
+	/**
+	 * @var string[]
+	 */
+	protected $loadedSources = [];
 
-	 /**
-	  * @var Aggregator
-	  */
-	 protected $parent = null;
+	/**
+	 * @var Aggregator
+	 */
+	protected $parent = null;
 
-	 public function __construct(Aggregator $Aggregator)
-	 {
-		 $this->parent = $Aggregator;
-	 }
+	public function __construct(Aggregator $Aggregator)
+	{
+		$this->parent = $Aggregator;
+	}
 
 	/**
 	 * @return string[] The keys of all found sources.
 	 */
 	public function findAllSources()
 	{
-		$configuration = $this->parent->getModule('Configuration');
-		$allSources = $configuration->get('aggregator.sources');
+		$allSources = Configuration::fromContainer($this->parent->getContainer())->get('aggregator.sources')->getValue();
 
 		$validSources = [];
 		foreach ($allSources as $key => $source)
@@ -71,6 +73,10 @@ class SourcePool
 		$loadedSources = [];
 		foreach ($sources as $key => $source)
 		{
+			Logger::fromContainer($this->parent->getContainer())->debug('[Aggregator] Added source', [
+				'key' => $key,
+				'class' => $source
+			]);
 			if ($this->loadSource($source, $key))
 				$loadedSources[$key] = $source;
 		}
@@ -88,7 +94,7 @@ class SourcePool
 	}
 
 	/**
-	 * @param string $soureKey
+	 * @param string $sourceKey
 	 * @return boolean
 	 */
 	public function sourceKeyExists($sourceKey)
@@ -116,6 +122,7 @@ class SourcePool
 
 		$this->loadedSources[] = $source;
 		$this->sources[$key] = $instance;
+		return true;
 	}
 
 	/**

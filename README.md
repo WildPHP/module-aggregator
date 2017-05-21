@@ -13,11 +13,11 @@ If your setup can run the main bot, it can run this module as well. You will nee
 ## Installation
 To install this module, we will use `composer`:
 
-composer require wildphp/module-aggregator
+```composer require wildphp/module-aggregator```
 
-That will install all required files for the module. In order to activate the module, add the following line to your `main.modules` file:
+That will install all required files for the module. In order to activate the module, add the following line to your modules array in `config.neon`:
 
-    WildPHP\Modules\Aggregator\Aggregator
+    - WildPHP\Modules\Aggregator\Aggregator
 
 The bot will run the module the next time it is started.
 

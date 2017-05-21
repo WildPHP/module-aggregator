@@ -20,36 +20,43 @@
 
 namespace WildPHP\Modules\Aggregator;
 
-use WildPHP\BaseModule;
-use WildPHP\CoreModules\Connection\IrcDataObject;
+use WildPHP\Core\Channels\Channel;
+use WildPHP\Core\Commands\CommandHelp;
+use WildPHP\Core\Commands\CommandHandler;
+use WildPHP\Core\ComponentContainer;
+use WildPHP\Core\Connection\Queue;
+use WildPHP\Core\ContainerTrait;
+use WildPHP\Core\EventEmitter;
+use WildPHP\Core\Users\User;
 
-class Aggregator extends BaseModule
+class Aggregator
 {
+	use ContainerTrait;
+
 	/**
 	 * @var SourcePool
 	 */
-	 protected $sourcePool = null;
+	protected $sourcePool = null;
 
-	/**
-	 * @return void
-	 */
-	public function setup()
+	public function __construct(ComponentContainer $container)
 	{
+
 		// Register our command.
-		$this->getEventEmitter()->on('irc.command.find', [$this, 'findCommand']);
-		$this->getEventEmitter()->on('wildphp.init.after', [$this, 'initSourcePool']);
-		$this->getEventEmitter()->on('irc.command.lssources', [$this, 'lsSourcesCommand']);
-		$this->getEventEmitter()->on('irc.command', [$this, 'keywordListener']);
+		$commandHelp = new CommandHelp();
+		$commandHelp->addPage('Search for a keyword using an online source.');
+		$commandHelp->addPage('Usage: find [source] [keyword or phrase]');
+		CommandHandler::fromContainer($container)->registerCommand('find', [$this, 'findCommand'], $commandHelp);
+
+		$commandHelp = new CommandHelp();
+		$commandHelp->addPage('Lists all available data sources. No parameters.');
+		CommandHandler::fromContainer($container)->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp);
+
+		EventEmitter::fromContainer($container)->on('irc.command', [$this, 'keywordListener']);
+
+		$this->setContainer($container);
 
 		$sourcePool = new SourcePool($this);
 		$this->setSourcePool($sourcePool);
-	}
-
-	/**
-	 * @return void
-	 */
-	public function initSourcePool()
-	{
 		$sourcePool = $this->getSourcePool();
 		$sources = $sourcePool->findAllSources();
 		$sourcePool->loadAllSources($sources);
@@ -72,16 +79,19 @@ class Aggregator extends BaseModule
 	}
 
 	/**
-	 * @param IrcDataObject $data The data received.
+	 * @param Channel $source
+	 * @param User $user
+	 * @param $args
+	 * @param ComponentContainer $container
 	 */
-	public function lsSourcesCommand($command, $params, IrcDataObject $data)
+	public function lsSourcesCommand(Channel $source, User $user, $args, ComponentContainer $container)
 	{
-		$originChannel = $data->getTargets()[0];
+		$originChannel = $source->getName();
 
 		$sourcePool = $this->getSourcePool();
 		$keys = $sourcePool->getSourceKeys();
 
-		$this->replyToChannel($originChannel, 'Available sources: ' . implode(', ', $keys));
+		Queue::fromContainer($container)->privmsg($originChannel, 'Available sources: ' . implode(', ', $keys));
 	}
 
 	/**
@@ -89,23 +99,29 @@ class Aggregator extends BaseModule
 	 * @param string $search
 	 * @param string $channel
 	 * @param string $user
+	 * @param ComponentContainer $container
 	 */
-	protected function handleResult($source, $search, $channel, $user = '')
+	protected function handleResult($source, $search, $channel, $user = '', ComponentContainer $container)
 	{
 		$sourcePool = $this->getSourcePool();
 		$source = $sourcePool->getSource($source);
 
 		if (!$source)
 		{
-			$this->replyToChannel($channel, 'The specified source was not found.');
+			Queue::fromContainer($container)->privmsg($channel, 'The specified source was not found.');
 			return;
 		}
 
 		$results = $source->find($search);
 
-		if (!$results)
+		if ($results === false)
 		{
-			$this->replyToChannel($channel, 'I had no results for that query.');
+			Queue::fromContainer($container)->privmsg($channel, 'An error occurred while searching. Please try again later.');
+			return;
+		}
+		elseif (empty($results))
+		{
+			Queue::fromContainer($container)->privmsg($channel, 'I had no results for that query.');
 			return;
 		}
 		$result = $this->getBestResult($search, $results);
@@ -114,47 +130,62 @@ class Aggregator extends BaseModule
 		if (!empty($user))
 			$string = $user . ': ' . $string;
 
-		$this->replyToChannel($channel, $string);
+		Queue::fromContainer($container)->privmsg($channel, $string);
 	}
 
 	/**
 	 * The find command itself
-	 * @param IrcDataObject $data The data received.
+	 *
+	 * @param Channel $source
+	 * @param User $user
+	 * @param $args
+	 * @param ComponentContainer $container
 	 */
-	public function findCommand($command, $params, IrcDataObject $data)
+	public function findCommand(Channel $source, User $user, $args, ComponentContainer $container)
 	{
-		$originChannel = $data->getTargets()[0];
+		$originChannel = $source->getName();
 
-		$paramData = $this->parseFindCommandParams($params);
+		$source = array_shift($args);
+
+		$paramData = $this->parseFindCommandParams(implode(' ', $args));
 
 		if (!$paramData)
 		{
-			$this->replyToChannel($originChannel,
+			Queue::fromContainer($container)->privmsg($originChannel,
 				'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
 			return;
 		}
 
 		$this->handleResult(
-			$paramData['source'],
+			$source,
 			$paramData['search'],
 			$originChannel,
-			$paramData['user']
+			$paramData['user'],
+			$container
 		);
 	}
 
-	public function keywordListener($command, $params, IrcDataObject $data)
+	/**
+	 * @param string $command
+	 * @param Channel $source
+	 * @param User $user
+	 * @param $args
+	 * @param ComponentContainer $container
+	 */
+	public function keywordListener(string $command, Channel $source, User $user, $args, ComponentContainer $container)
 	{
 		$sourcePool = $this->getSourcePool();
-		$originChannel = $data->getTargets()[0];
+		$originChannel = $source->getName();
 
 		if (!$sourcePool->sourceKeyExists($command))
 			return;
 
-		$paramData = $this->parseParams($params);
+		$args = implode(' ', $args);
+		$paramData = $this->parseParams($args);
 
-		if (empty($params) || empty($paramData))
+		if (empty($paramData))
 		{
-			$this->replyToChannel($originChannel,
+			Queue::fromContainer($container)->privmsg($originChannel,
 				'Invalid parameters. Usage: ' . $command . ' [search term] (@ [user])');
 			return;
 		}
@@ -163,12 +194,21 @@ class Aggregator extends BaseModule
 			$command,
 			$paramData['search'],
 			$originChannel,
-			$paramData['user']
+			$paramData['user'],
+			$container
 		);
 	}
 
+	/**
+	 * @param $comparedTo
+	 * @param $results
+	 * @return null
+	 */
 	public function getBestResult($comparedTo, $results)
 	{
+		if (empty($results))
+			return false;
+
 		$results = array_reverse($results);
 
 		$bestResult = null;
@@ -222,7 +262,7 @@ class Aggregator extends BaseModule
 	 */
 	public function parseFindCommandParams($params)
 	{
-		$regex = "/^(\\S+) (?:(.+) @ (\\S+)|(.+))$/";
+		$regex = "/^(.+) @ (\\S+)|(.+)$/";
 		$params = trim($params);
 
 		if (!preg_match($regex, $params, $matches))
@@ -231,12 +271,15 @@ class Aggregator extends BaseModule
 		$matches = array_values(array_filter($matches));
 
 		return [
-			'source' => $matches[1],
-			'search' => $matches[2],
-			'user' => !empty($matches[3]) ? $matches[3] : null
+			'search' => $matches[1],
+			'user' => !empty($matches[2]) ? $matches[2] : null
 		];
 	}
 
+	/**
+	 * @param $params
+	 * @return array|bool
+	 */
 	public function parseParams($params)
 	{
 		$regex = "/^(?:(.+) @ (\\S+)|(.+))$/";
@@ -251,12 +294,5 @@ class Aggregator extends BaseModule
 			'search' => $matches[1],
 			'user' => !empty($matches[2]) ? $matches[2] : null
 		];
-	}
-
-	public function replyToChannel($channel, $message)
-	{
-		$connection = $this->getModule('Connection');
-		$connection->write($connection->getGenerator()
-			->ircPrivmsg($channel, $message));
 	}
 }
