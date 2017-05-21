@@ -26,18 +26,18 @@ Additional sources can be added through composer as well. Refer to the source pl
 ## Configuration
 In order for this module to work, you need at least the following in your `config.neon`:
 
-```
+```neon
 aggregator:
 	sources:
 ```
 
 Additional sources may be added in that key in the following format:
-```
+```neon
 		key: SourceClass
 ```
 
 Example:
-```
+```neon
 		wp: WildPHP\Modules\Aggregator\Sources\Wikipedia
 ```
 
