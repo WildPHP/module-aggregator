@@ -52,6 +52,7 @@ class Aggregator
 		CommandHandler::fromContainer($container)->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp);
 
 		EventEmitter::fromContainer($container)->on('irc.command', [$this, 'keywordListener']);
+		EventEmitter::fromContainer($container)->on('telegram.command', [$this, 'handleTelegramResult']);
 
 		$this->setContainer($container);
 
@@ -131,6 +132,48 @@ class Aggregator
 			$string = $user . ': ' . $string;
 
 		Queue::fromContainer($container)->privmsg($channel, $string);
+	}
+
+	/**
+	 * @param string $source
+	 * @param \Telegram $telegram
+	 * @param mixed $chat_id
+	 * @param array $arguments
+	 * @param string $channel
+	 * @param string $username
+	 */
+	public function handleTelegramResult(string $source, \Telegram $telegram, $chat_id, array $arguments, string $channel, string $username)
+	{
+		$sourcePool = $this->getSourcePool();
+		$source = $sourcePool->getSource($source);
+
+		if (!$source)
+			return;
+
+		$params = implode(' ', $arguments);
+		$params = $this->parseParams($params);
+		$results = $source->find($params['search']);
+
+		if ($results === false)
+		{
+			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'An error occurred while searching. Please try again later.']);
+			return;
+		}
+		elseif (empty($results))
+		{
+			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'I had no results for that query.']);
+			return;
+		}
+		$result = $this->getBestResult($params['search'], $results);
+		$string = $this->createSearchResultString($result);
+
+		if (!empty($params['user']))
+			$string = $params['user'] . ': ' . $string;
+
+		$telegram->sendMessage(['chat_id' => $chat_id, 'text' => $string]);
+		Queue::fromContainer($this->getContainer())->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
+		Queue::fromContainer($this->getContainer())->privmsg($channel, $string);
+
 	}
 
 	/**
