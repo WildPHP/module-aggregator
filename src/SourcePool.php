@@ -109,7 +109,7 @@ class SourcePool
 	 */
 	public function loadSource($source, $key)
 	{
-		if ($this->isSourceLoaded($source) || $this->sourceKeyExists($key))
+		if ($this->sourceKeyExists($key))
 			return true;
 
 		if (!class_exists($source) || empty($source) || empty($key))
