@@ -312,7 +312,7 @@ class Aggregator
 	/**
 	 * @param string $params
 	 *
-	 * @return array|false
+	 * @return false|array
 	 */
 	public function parseFindCommandParams(string $params)
 	{
@@ -333,7 +333,7 @@ class Aggregator
 	/**
 	 * @param $params
 	 *
-	 * @return array|false
+	 * @return false|array
 	 */
 	public function parseParams($params)
 	{

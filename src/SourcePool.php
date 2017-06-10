@@ -148,7 +148,7 @@ class SourcePool
 	}
 
 	/**
-	 * @return string[]
+	 * @return array<int|string>
 	 */
 	public function getSourceKeys()
 	{
