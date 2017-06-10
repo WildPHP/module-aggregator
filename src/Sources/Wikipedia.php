@@ -29,7 +29,13 @@ class Wikipedia implements IAggregatorSource
 {
 	protected $apiUri = 'https://en.wikipedia.org/w/api.php';
 
-	protected function buildSearchUri($searchTerm, $limitResults = false)
+	/**
+	 * @param string $searchTerm
+	 * @param int $limitResults
+	 *
+	 * @return string
+	 */
+	protected function buildSearchUri(string $searchTerm, int $limitResults = 0): string
 	{
 		$searchTerm = urlencode($searchTerm);
 		$url = $this->apiUri;
@@ -53,12 +59,20 @@ class Wikipedia implements IAggregatorSource
 		return $url;
 	}
 
+	/**
+	 * @param $searchUri
+	 *
+	 * @return false|SearchResult[]
+	 */
 	protected function getSearchResults($searchUri)
 	{
 		$client = new Client(['timeout' => 2.0]);
 		$response = $client->get($searchUri);
 		$contents = $response->getBody();
 		$result = json_decode($contents);
+
+		if (!$result)
+			return false;
 
 		$results = [];
 		// Because MediaWiki returns results in this awkward way,
@@ -83,7 +97,12 @@ class Wikipedia implements IAggregatorSource
 		return $results;
 	}
 
-	public function find($searchTerm)
+	/**
+	 * @param string $searchTerm
+	 *
+	 * @return false|SearchResult[]
+	 */
+	public function find(string $searchTerm)
 	{
 		$uri = $this->buildSearchUri($searchTerm);
 

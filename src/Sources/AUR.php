@@ -32,9 +32,10 @@ class AUR implements IAggregatorSource
 
 	/**
 	 * @param array $parts
+	 *
 	 * @return array
 	 */
-	public function buildPartsForUri($parts)
+	public function encodeUriParts(array $parts): array
 	{
 		$pieces = [];
 		foreach ($parts as $key => $value)
@@ -47,27 +48,28 @@ class AUR implements IAggregatorSource
 
 	/**
 	 * @param array $parts
+	 *
 	 * @return string
 	 */
-	public function buildUriWithParts($parts = [])
+	public function buildUriWithParts(array $parts = []): string
 	{
 		$uri = $this->apiUri . '?v=5';
 
-		$pieces = $this->buildPartsForUri($parts);
-
-		if (empty($pieces))
+		if (empty($parts))
 			return $uri;
 
-		$uri .= '&' . implode('&', $pieces);
+		$parts = $this->encodeUriParts($parts);
+		$uri .= '&' . implode('&', $parts);
 
 		return $uri;
 	}
 
 	/**
 	 * @param string $uri
-	 * @return string
+	 *
+	 * @return false|SearchResult[]
 	 */
-	public function executeQuery($uri)
+	public function executeQuery(string $uri)
 	{
 		$client = new Client(['timeout' => 2.0]);
 		$response = $client->get($uri);
@@ -92,16 +94,18 @@ class AUR implements IAggregatorSource
 			$searchResult->setUri($pkguri);
 			$finalresults[] = $searchResult;
 		}
+
 		return $finalresults;
 	}
 
-	public function find($searchTerm)
+	public function find(string $searchTerm)
 	{
 		$uri = $this->buildUriWithParts(['type' => 'search', 'arg' => $searchTerm]);
 
 		try
 		{
 			$results = $this->executeQuery($uri);
+
 			return $results;
 		}
 		catch (RequestException $e)

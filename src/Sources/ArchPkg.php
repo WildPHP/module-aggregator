@@ -30,16 +30,24 @@ class ArchPkg implements IAggregatorSource
 	protected $apiUri = 'https://www.archlinux.org/packages/search/json';
 	protected $pkgBaseUri = 'https://www.archlinux.org/packages';
 
-	public function buildPackageUri($repo, $arch, $pkgname)
+	/**
+	 * @param string $repo
+	 * @param string $arch
+	 * @param string $pkgname
+	 *
+	 * @return string
+	 */
+	public function getPackageUri(string $repo, string $arch, string $pkgname)
 	{
 		return $this->pkgBaseUri . '/' . $repo . '/' . $arch . '/' . $pkgname;
 	}
 
 	/**
 	 * @param array $parts
+	 *
 	 * @return array
 	 */
-	public function buildPartsForUri($parts)
+	public function encodeUriParts(array $parts): array
 	{
 		$pieces = [];
 		foreach ($parts as $key => $value)
@@ -52,27 +60,28 @@ class ArchPkg implements IAggregatorSource
 
 	/**
 	 * @param array $parts
+	 *
 	 * @return string
 	 */
-	public function buildUriWithParts($parts = [])
+	public function buildUriWithParts(array $parts = []): string
 	{
 		$uri = $this->apiUri;
 
-		$pieces = $this->buildPartsForUri($parts);
-
-		if (empty($pieces))
+		if (empty($parts))
 			return $uri;
 
-		$uri .= '?' . implode('&', $pieces);
+		$parts = $this->encodeUriParts($parts);
+		$uri .= '?' . implode('&', $parts);
 
 		return $uri;
 	}
 
 	/**
 	 * @param string $uri
-	 * @return string
+	 *
+	 * @return false|SearchResult[]
 	 */
-	public function executeQuery($uri)
+	public function executeQuery(string $uri)
 	{
 		$client = new Client(['timeout' => 2.0]);
 		$response = $client->get($uri);
@@ -90,7 +99,7 @@ class ArchPkg implements IAggregatorSource
 			$pkgname = $resultset['pkgname'];
 			$pkgver = $resultset['pkgver'] . '-' . $resultset['pkgrel'];
 			$pkgdesc = $resultset['pkgdesc'] . ' -- version ' . $pkgver;
-			$uri = $this->buildPackageUri($repo, $arch, $pkgname);
+			$uri = $this->getPackageUri($repo, $arch, $pkgname);
 			$title = $pkgname;
 
 			$searchResult = new SearchResult();
@@ -99,16 +108,23 @@ class ArchPkg implements IAggregatorSource
 			$searchResult->setUri($uri);
 			$finalresults[] = $searchResult;
 		}
+
 		return $finalresults;
 	}
 
-	public function find($searchTerm)
+	/**
+	 * @param string $searchTerm
+	 *
+	 * @return false|SearchResult[]
+	 */
+	public function find(string $searchTerm)
 	{
 		$uri = $this->buildUriWithParts(['q' => $searchTerm]);
 
 		try
 		{
-        	$results = $this->executeQuery($uri);
+			$results = $this->executeQuery($uri);
+
 			return $results;
 		}
 		catch (RequestException $e)

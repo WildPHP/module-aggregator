@@ -26,7 +26,8 @@ use WildPHP\Core\Logger\Logger;
 class SourcePool
 {
 	/**
-	 * @var IAggregatorSource[]
+	 * 'key' => instance
+	 * @var array
 	 */
 	protected $sources = [];
 
@@ -40,9 +41,9 @@ class SourcePool
 	 */
 	protected $parent = null;
 
-	public function __construct(Aggregator $Aggregator)
+	public function __construct(Aggregator $aggregator)
 	{
-		$this->parent = $Aggregator;
+		$this->parent = $aggregator;
 	}
 
 	/**
@@ -50,7 +51,9 @@ class SourcePool
 	 */
 	public function findAllSources()
 	{
-		$allSources = Configuration::fromContainer($this->parent->getContainer())->get('aggregator.sources')->getValue();
+		$allSources = Configuration::fromContainer($this->parent->getContainer())
+			->get('aggregator.sources')
+			->getValue();
 
 		$validSources = [];
 		foreach ($allSources as $key => $source)
@@ -66,6 +69,7 @@ class SourcePool
 
 	/**
 	 * @param string[] $sources
+	 *
 	 * @return string[] The keys of all loaded sources.
 	 */
 	public function loadAllSources($sources = [])
@@ -73,10 +77,11 @@ class SourcePool
 		$loadedSources = [];
 		foreach ($sources as $key => $source)
 		{
-			Logger::fromContainer($this->parent->getContainer())->debug('[Aggregator] Added source', [
-				'key' => $key,
-				'class' => $source
-			]);
+			Logger::fromContainer($this->parent->getContainer())
+				->debug('[Aggregator] Added source', [
+					'key' => $key,
+					'class' => $source
+				]);
 			if ($this->loadSource($source, $key))
 				$loadedSources[$key] = $source;
 		}
@@ -86,6 +91,7 @@ class SourcePool
 
 	/**
 	 * @param string $source
+	 *
 	 * @return boolean
 	 */
 	public function isSourceLoaded($source)
@@ -95,6 +101,7 @@ class SourcePool
 
 	/**
 	 * @param string $sourceKey
+	 *
 	 * @return boolean
 	 */
 	public function sourceKeyExists($sourceKey)
@@ -105,6 +112,7 @@ class SourcePool
 	/**
 	 * @param string $source
 	 * @param string $key
+	 *
 	 * @return boolean
 	 */
 	public function loadSource($source, $key)
@@ -122,11 +130,13 @@ class SourcePool
 
 		$this->loadedSources[] = $source;
 		$this->sources[$key] = $instance;
+
 		return true;
 	}
 
 	/**
 	 * @param string $sourceKey
+	 *
 	 * @return IAggregatorSource|false
 	 */
 	public function getSource($sourceKey)

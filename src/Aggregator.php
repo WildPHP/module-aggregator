@@ -43,16 +43,19 @@ class Aggregator
 
 		// Register our command.
 		$commandHelp = new CommandHelp();
-		$commandHelp->addPage('Search for a keyword using an online source.');
-		$commandHelp->addPage('Usage: find [source] [keyword or phrase]');
-		CommandHandler::fromContainer($container)->registerCommand('find', [$this, 'findCommand'], $commandHelp);
+		$commandHelp->addPage('Search for a keyword using an online source. Usage: find [source] [keyword or phrase]');
+		CommandHandler::fromContainer($container)
+			->registerCommand('find', [$this, 'findCommand'], $commandHelp, 2, -1);
 
 		$commandHelp = new CommandHelp();
 		$commandHelp->addPage('Lists all available data sources. No parameters.');
-		CommandHandler::fromContainer($container)->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp);
+		CommandHandler::fromContainer($container)
+			->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp, 0, 0);
 
-		EventEmitter::fromContainer($container)->on('irc.command', [$this, 'keywordListener']);
-		EventEmitter::fromContainer($container)->on('telegram.command', [$this, 'handleTelegramResult']);
+		EventEmitter::fromContainer($container)
+			->on('irc.command', [$this, 'keywordListener']);
+		EventEmitter::fromContainer($container)
+			->on('telegram.command', [$this, 'handleTelegramResult']);
 
 		$this->setContainer($container);
 
@@ -64,35 +67,20 @@ class Aggregator
 	}
 
 	/**
-	 * @param $sourcePool SourcePool
-	 */
-	public function setSourcePool(SourcePool $sourcePool)
-	{
-		$this->sourcePool = $sourcePool;
-	}
-
-	/**
-	 * @return SourcePool
-	 */
-	public function getSourcePool()
-	{
-		return $this->sourcePool;
-	}
-
-	/**
 	 * @param Channel $source
 	 * @param User $user
-	 * @param $args
+	 * @param array $args
 	 * @param ComponentContainer $container
 	 */
-	public function lsSourcesCommand(Channel $source, User $user, $args, ComponentContainer $container)
+	public function lsSourcesCommand(Channel $source, User $user, array $args, ComponentContainer $container)
 	{
 		$originChannel = $source->getName();
 
 		$sourcePool = $this->getSourcePool();
 		$keys = $sourcePool->getSourceKeys();
 
-		Queue::fromContainer($container)->privmsg($originChannel, 'Available sources: ' . implode(', ', $keys));
+		Queue::fromContainer($container)
+			->privmsg($originChannel, 'Available sources: ' . implode(', ', $keys));
 	}
 
 	/**
@@ -102,14 +90,16 @@ class Aggregator
 	 * @param string $user
 	 * @param ComponentContainer $container
 	 */
-	protected function handleResult($source, $search, $channel, $user = '', ComponentContainer $container)
+	protected function handleResult(string $source, string $search, string $channel, string $user, ComponentContainer $container)
 	{
 		$sourcePool = $this->getSourcePool();
 		$source = $sourcePool->getSource($source);
 
 		if (!$source)
 		{
-			Queue::fromContainer($container)->privmsg($channel, 'The specified source was not found.');
+			Queue::fromContainer($container)
+				->privmsg($channel, 'The specified source was not found.');
+
 			return;
 		}
 
@@ -117,21 +107,28 @@ class Aggregator
 
 		if ($results === false)
 		{
-			Queue::fromContainer($container)->privmsg($channel, 'An error occurred while searching. Please try again later.');
+			Queue::fromContainer($container)
+				->privmsg($channel, 'An error occurred while searching. Please try again later.');
+
 			return;
 		}
 		elseif (empty($results))
 		{
-			Queue::fromContainer($container)->privmsg($channel, 'I had no results for that query.');
+			Queue::fromContainer($container)
+				->privmsg($channel, 'I had no results for that query.');
+
 			return;
 		}
+
+		// No need to check for null here. $results was just checked for emptiness.
 		$result = $this->getBestResult($search, $results);
 		$string = $this->createSearchResultString($result);
 
 		if (!empty($user))
 			$string = $user . ': ' . $string;
 
-		Queue::fromContainer($container)->privmsg($channel, $string);
+		Queue::fromContainer($container)
+			->privmsg($channel, $string);
 	}
 
 	/**
@@ -157,11 +154,13 @@ class Aggregator
 		if ($results === false)
 		{
 			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'An error occurred while searching. Please try again later.']);
+
 			return;
 		}
 		elseif (empty($results))
 		{
 			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'I had no results for that query.']);
+
 			return;
 		}
 		$result = $this->getBestResult($params['search'], $results);
@@ -171,8 +170,10 @@ class Aggregator
 			$string = $params['user'] . ': ' . $string;
 
 		$telegram->sendMessage(['chat_id' => $chat_id, 'text' => $string]);
-		Queue::fromContainer($this->getContainer())->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
-		Queue::fromContainer($this->getContainer())->privmsg($channel, $string);
+		Queue::fromContainer($this->getContainer())
+			->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
+		Queue::fromContainer($this->getContainer())
+			->privmsg($channel, $string);
 
 	}
 
@@ -181,10 +182,10 @@ class Aggregator
 	 *
 	 * @param Channel $source
 	 * @param User $user
-	 * @param $args
+	 * @param array $args
 	 * @param ComponentContainer $container
 	 */
-	public function findCommand(Channel $source, User $user, $args, ComponentContainer $container)
+	public function findCommand(Channel $source, User $user, array $args, ComponentContainer $container)
 	{
 		$originChannel = $source->getName();
 
@@ -194,8 +195,10 @@ class Aggregator
 
 		if (!$paramData)
 		{
-			Queue::fromContainer($container)->privmsg($originChannel,
-				'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
+			Queue::fromContainer($container)
+				->privmsg($originChannel,
+					'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
+
 			return;
 		}
 
@@ -212,10 +215,10 @@ class Aggregator
 	 * @param string $command
 	 * @param Channel $source
 	 * @param User $user
-	 * @param $args
+	 * @param array $args
 	 * @param ComponentContainer $container
 	 */
-	public function keywordListener(string $command, Channel $source, User $user, $args, ComponentContainer $container)
+	public function keywordListener(string $command, Channel $source, User $user, array $args, ComponentContainer $container)
 	{
 		$sourcePool = $this->getSourcePool();
 		$originChannel = $source->getName();
@@ -228,8 +231,10 @@ class Aggregator
 
 		if (empty($paramData))
 		{
-			Queue::fromContainer($container)->privmsg($originChannel,
-				'Invalid parameters. Usage: ' . $command . ' [search term] (@ [user])');
+			Queue::fromContainer($container)
+				->privmsg($originChannel,
+					'Invalid parameters. Usage: ' . $command . ' [search term] (@ [user])');
+
 			return;
 		}
 
@@ -243,20 +248,22 @@ class Aggregator
 	}
 
 	/**
-	 * @param $comparedTo
-	 * @param $results
-	 * @return null
+	 * @param string $comparedTo
+	 * @param SearchResult[] $results
+	 *
+	 * @return null|SearchResult
 	 */
-	public function getBestResult($comparedTo, $results)
+	public function getBestResult(string $comparedTo, array $results)
 	{
 		if (empty($results))
-			return false;
+			return null;
 
 		$results = array_reverse($results);
 
 		$bestResult = null;
 		$shortestFound = -1;
 
+		/** @var SearchResult $result */
 		foreach ($results as $result)
 		{
 			$pkgname = $result->getTitle();
@@ -277,14 +284,16 @@ class Aggregator
 				$shortestFound = $lev;
 			}
 		}
+
 		return $bestResult;
 	}
 
 	/**
 	 * @param SearchResult $searchResult
+	 *
 	 * @return string
 	 */
-	public function createSearchResultString(SearchResult $searchResult)
+	public function createSearchResultString(SearchResult $searchResult): string
 	{
 		$str = $searchResult->getTitle();
 		$str .= ' - ';
@@ -296,16 +305,18 @@ class Aggregator
 		}
 
 		$str .= $searchResult->getUri();
+
 		return $str;
 	}
 
 	/**
 	 * @param string $params
-	 * @return string[]|false
+	 *
+	 * @return array|false
 	 */
-	public function parseFindCommandParams($params)
+	public function parseFindCommandParams(string $params)
 	{
-		$regex = "/^(.+) @ (\\S+)|(.+)$/";
+		$regex = '/^(.+) @ (\\S+)|(.+)$/';
 		$params = trim($params);
 
 		if (!preg_match($regex, $params, $matches))
@@ -321,11 +332,12 @@ class Aggregator
 
 	/**
 	 * @param $params
-	 * @return array|bool
+	 *
+	 * @return array|false
 	 */
 	public function parseParams($params)
 	{
-		$regex = "/^(?:(.+) @ (\\S+)|(.+))$/";
+		$regex = '/^(?:(.+) @ (\\S+)|(.+))$/';
 		$params = trim($params);
 
 		if (!preg_match($regex, $params, $matches))
@@ -337,5 +349,21 @@ class Aggregator
 			'search' => $matches[1],
 			'user' => !empty($matches[2]) ? $matches[2] : null
 		];
+	}
+
+	/**
+	 * @param $sourcePool SourcePool
+	 */
+	public function setSourcePool(SourcePool $sourcePool)
+	{
+		$this->sourcePool = $sourcePool;
+	}
+
+	/**
+	 * @return SourcePool
+	 */
+	public function getSourcePool(): SourcePool
+	{
+		return $this->sourcePool;
 	}
 }

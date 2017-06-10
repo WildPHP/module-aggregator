@@ -22,39 +22,66 @@ namespace WildPHP\Modules\Aggregator;
 
 class SearchResult
 {
+	/**
+	 * @var string
+	 */
 	protected $title;
 
+	/**
+	 * @var string
+	 */
 	protected $uri;
 
+	/**
+	 * @var string
+	 */
 	protected $description;
 
-	public function setUri($uri)
-	{
-		$this->uri = $uri;
-	}
-
-	public function setTitle($title)
-	{
-		$this->title = $title;
-	}
-
-	public function setDescription($description)
-	{
-		$this->description = $description;
-	}
-
-	public function getUri()
-	{
-		return $this->uri;
-	}
-
-	public function getTitle()
+	/**
+	 * @return string
+	 */
+	public function getTitle(): string
 	{
 		return $this->title;
 	}
 
-	public function getDescription()
+	/**
+	 * @param string $title
+	 */
+	public function setTitle(string $title)
+	{
+		$this->title = $title;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getUri(): string
+	{
+		return $this->uri;
+	}
+
+	/**
+	 * @param string $uri
+	 */
+	public function setUri(string $uri)
+	{
+		$this->uri = $uri;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDescription(): string
 	{
 		return $this->description;
+	}
+
+	/**
+	 * @param string $description
+	 */
+	public function setDescription(string $description)
+	{
+		$this->description = $description;
 	}
 }

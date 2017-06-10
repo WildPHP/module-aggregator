@@ -24,7 +24,7 @@ interface IAggregatorSource
 {
 	/**
 	 * @param string $searchTerm
-	 * @return SearchResult[]
+	 * @return false|SearchResult[]
 	 */
-	public function find($searchTerm);
+	public function find(string $searchTerm);
 }
