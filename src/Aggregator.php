@@ -170,11 +170,14 @@ class Aggregator
 			$string = $params['user'] . ': ' . $string;
 
 		$telegram->sendMessage(['chat_id' => $chat_id, 'text' => $string]);
-		Queue::fromContainer($this->getContainer())
-			->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
-		Queue::fromContainer($this->getContainer())
-			->privmsg($channel, $string);
 
+		if (!empty($channel))
+		{
+			Queue::fromContainer($this->getContainer())
+				->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
+			Queue::fromContainer($this->getContainer())
+				->privmsg($channel, $string);
+		}
 	}
 
 	/**
