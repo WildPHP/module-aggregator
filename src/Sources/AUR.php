@@ -98,6 +98,11 @@ class AUR implements IAggregatorSource
 		return $finalresults;
 	}
 
+	/**
+	 * @param string $searchTerm
+	 *
+	 * @return false|SearchResult[]
+	 */
 	public function find(string $searchTerm)
 	{
 		$uri = $this->buildUriWithParts(['type' => 'search', 'arg' => $searchTerm]);

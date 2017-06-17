@@ -154,4 +154,12 @@ class SourcePool
 	{
 		return array_keys($this->sources);
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getLoadedSources()
+	{
+		return $this->sources;
+	}
 }

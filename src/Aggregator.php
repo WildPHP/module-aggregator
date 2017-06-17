@@ -20,6 +20,7 @@
 
 namespace WildPHP\Modules\Aggregator;
 
+use phpDocumentor\Reflection\DocBlock\Tags\Source;
 use WildPHP\Core\Channels\Channel;
 use WildPHP\Core\Commands\CommandHelp;
 use WildPHP\Core\Commands\CommandHandler;
@@ -28,6 +29,7 @@ use WildPHP\Core\Connection\Queue;
 use WildPHP\Core\ContainerTrait;
 use WildPHP\Core\EventEmitter;
 use WildPHP\Core\Users\User;
+use WildPHP\Modules\TGRelay\TGCommandHandler;
 
 class Aggregator
 {
@@ -38,9 +40,13 @@ class Aggregator
 	 */
 	protected $sourcePool = null;
 
+	/**
+	 * Aggregator constructor.
+	 *
+	 * @param ComponentContainer $container
+	 */
 	public function __construct(ComponentContainer $container)
 	{
-
 		// Register our command.
 		$commandHelp = new CommandHelp();
 		$commandHelp->addPage('Search for a keyword using an online source. Usage: find [source] [keyword or phrase]');
@@ -52,11 +58,6 @@ class Aggregator
 		CommandHandler::fromContainer($container)
 			->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp, 0, 0);
 
-		EventEmitter::fromContainer($container)
-			->on('irc.command', [$this, 'keywordListener']);
-		EventEmitter::fromContainer($container)
-			->on('telegram.command', [$this, 'handleTelegramResult']);
-
 		$this->setContainer($container);
 
 		$sourcePool = new SourcePool($this);
@@ -64,6 +65,45 @@ class Aggregator
 		$sourcePool = $this->getSourcePool();
 		$sources = $sourcePool->findAllSources();
 		$sourcePool->loadAllSources($sources);
+
+		/** @var CommandHandler $commandHandler */
+		$commandHandler = CommandHandler::fromContainer($container);
+		$this->registerCommands($commandHandler, $sourcePool);
+
+		EventEmitter::fromContainer($container)->on('telegram.commands.add', function (TGCommandHandler $commandHandler) use ($sourcePool)
+		{
+			$this->registerTGCommands($commandHandler, $sourcePool);
+		});
+	}
+
+	/**
+	 * @param CommandHandler $commandHandler
+	 * @param SourcePool $pool
+	 */
+	public function registerCommands(CommandHandler $commandHandler, SourcePool $pool)
+	{
+		/** @var array<string,IAggregatorSource> $sources */
+		$sources = $pool->getLoadedSources();
+
+		foreach ($sources as $key => $source)
+		{
+			$commandHandler->registerCommand($key, [$this, 'handleResult'], null, 0, 2);
+		}
+	}
+
+	/**
+	 * @param TGCommandHandler $commandHandler
+	 * @param SourcePool $pool
+	 */
+	public function registerTGCommands(TGCommandHandler $commandHandler, SourcePool $pool)
+	{
+		/** @var array<string,IAggregatorSource> $sources */
+		$sources = $pool->getLoadedSources();
+
+		foreach ($sources as $key => $source)
+		{
+			$commandHandler->registerCommand($key, [$this, 'handleTelegramResult'], null, 0, 2);
+		}
 	}
 
 	/**
@@ -90,7 +130,7 @@ class Aggregator
 	 * @param string $user
 	 * @param ComponentContainer $container
 	 */
-	protected function handleResult(string $source, string $search, string $channel, string $user, ComponentContainer $container)
+	public function handleResult(string $search, string $channel, string $user, ComponentContainer $container, string $source)
 	{
 		$sourcePool = $this->getSourcePool();
 		$source = $sourcePool->getSource($source);
@@ -139,7 +179,7 @@ class Aggregator
 	 * @param string $channel
 	 * @param string $username
 	 */
-	public function handleTelegramResult(string $source, \Telegram $telegram, $chat_id, array $arguments, string $channel, string $username)
+	public function handleTelegramResult(\Telegram $telegram, $chat_id, array $arguments, string $channel, string $username, string $source)
 	{
 		$sourcePool = $this->getSourcePool();
 		$source = $sourcePool->getSource($source);
