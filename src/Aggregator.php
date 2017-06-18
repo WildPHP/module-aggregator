@@ -124,38 +124,31 @@ class Aggregator
 	}
 
 	/**
-	 * @param string $source
-	 * @param string $search
-	 * @param string $channel
-	 * @param string $user
+	 *
 	 * @param ComponentContainer $container
 	 */
-	public function handleResult(string $search, string $channel, string $user, ComponentContainer $container, string $source)
+	public function handleResult(Channel $channel, User $user, array $args, ComponentContainer $container, string $source)
 	{
 		$sourcePool = $this->getSourcePool();
 		$source = $sourcePool->getSource($source);
 
-		if (!$source)
-		{
-			Queue::fromContainer($container)
-				->privmsg($channel, 'The specified source was not found.');
-
-			return;
-		}
+		$params = implode(' ', $args);
+		$params = $this->parseParams($params);
+		$search = $params['search'];
 
 		$results = $source->find($search);
 
 		if ($results === false)
 		{
 			Queue::fromContainer($container)
-				->privmsg($channel, 'An error occurred while searching. Please try again later.');
+				->privmsg($channel->getName(), 'An error occurred while searching. Please try again later.');
 
 			return;
 		}
 		elseif (empty($results))
 		{
 			Queue::fromContainer($container)
-				->privmsg($channel, 'I had no results for that query.');
+				->privmsg($channel->getName(), 'I had no results for that query.');
 
 			return;
 		}
@@ -164,11 +157,11 @@ class Aggregator
 		$result = $this->getBestResult($search, $results);
 		$string = $this->createSearchResultString($result);
 
-		if (!empty($user))
-			$string = $user . ': ' . $string;
+		if (!empty($params['user']))
+			$string = $params['user'] . ': ' . $string;
 
 		Queue::fromContainer($container)
-			->privmsg($channel, $string);
+			->privmsg($channel->getName(), $string);
 	}
 
 	/**
@@ -221,36 +214,21 @@ class Aggregator
 	}
 
 	/**
-	 * The find command itself
-	 *
 	 * @param Channel $source
 	 * @param User $user
 	 * @param array $args
 	 * @param ComponentContainer $container
 	 */
-	public function findCommand(Channel $source, User $user, array $args, ComponentContainer $container)
+	public function findCommand(Channel $channel, User $user, array $args, ComponentContainer $container)
 	{
-		$originChannel = $source->getName();
-
 		$source = array_shift($args);
 
-		$paramData = $this->parseFindCommandParams(implode(' ', $args));
-
-		if (!$paramData)
-		{
-			Queue::fromContainer($container)
-				->privmsg($originChannel,
-					'Invalid parameters. Usage: find [source] [search terms] (@ [user])');
-
-			return;
-		}
-
 		$this->handleResult(
-			$source,
-			$paramData['search'],
-			$originChannel,
-			$paramData['user'],
-			$container
+			$channel,
+			$user,
+			$args,
+			$container,
+			$source
 		);
 	}
 
@@ -350,27 +328,6 @@ class Aggregator
 		$str .= $searchResult->getUri();
 
 		return $str;
-	}
-
-	/**
-	 * @param string $params
-	 *
-	 * @return false|array
-	 */
-	public function parseFindCommandParams(string $params)
-	{
-		$regex = '/^(.+) @ (\\S+)|(.+)$/';
-		$params = trim($params);
-
-		if (!preg_match($regex, $params, $matches))
-			return false;
-
-		$matches = array_values(array_filter($matches));
-
-		return [
-			'search' => $matches[1],
-			'user' => !empty($matches[2]) ? $matches[2] : null
-		];
 	}
 
 	/**
