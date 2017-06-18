@@ -87,7 +87,7 @@ class Aggregator
 
 		foreach ($sources as $key => $source)
 		{
-			$commandHandler->registerCommand($key, [$this, 'handleResult'], null, 0, 2);
+			$commandHandler->registerCommand($key, [$this, 'handleResult'], null, 0, 3);
 		}
 	}
 
@@ -102,7 +102,7 @@ class Aggregator
 
 		foreach ($sources as $key => $source)
 		{
-			$commandHandler->registerCommand($key, [$this, 'handleTelegramResult'], null, 0, 2);
+			$commandHandler->registerCommand($key, [$this, 'handleTelegramResult'], null, 0, 3);
 		}
 	}
 
