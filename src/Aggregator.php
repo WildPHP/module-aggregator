@@ -124,8 +124,11 @@ class Aggregator
 	}
 
 	/**
-	 *
+	 * @param Channel $channel
+	 * @param User $user
+	 * @param array $args
 	 * @param ComponentContainer $container
+	 * @param string $source
 	 */
 	public function handleResult(Channel $channel, User $user, array $args, ComponentContainer $container, string $source)
 	{
