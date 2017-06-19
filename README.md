@@ -67,4 +67,4 @@ Once you have configured the sources, they will be loaded per their keyword and 
 The `wp` command will simply be an alias for `find wp`. That means it follows the same syntax as the `find` command but you do not have to specify a source.
 
 ## License
-This module is licensed under the GNU General Public License, version 3. Please see `LICENSE` to read it.
+This module is licensed under the MIT license. Please see `LICENSE` to read it.
