@@ -12,4 +12,20 @@ namespace WildPHP\Modules\Aggregator\Sources;
 class ArchWiki extends Wikipedia
 {
 	protected $apiUri = 'https://wiki.archlinux.org/api.php';
+
+	/**
+	 * @return string
+	 */
+	public function getDescription(): string
+	{
+		return 'Search the Arch Linux Wiki for the given string.';
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReadableName(): string
+	{
+		return 'Arch Linux Wiki';
+	}
 }

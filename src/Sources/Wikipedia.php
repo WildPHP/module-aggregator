@@ -105,4 +105,20 @@ class Wikipedia implements IAggregatorSource
 			return false;
 		}
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getDescription(): string
+	{
+		return 'Search Wikipedia for a given string.';
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReadableName(): string
+	{
+		return 'Wikipedia';
+	}
 }

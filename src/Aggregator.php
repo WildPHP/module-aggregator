@@ -9,7 +9,6 @@
 
 namespace WildPHP\Modules\Aggregator;
 
-use phpDocumentor\Reflection\DocBlock\Tags\Source;
 use WildPHP\Core\Channels\Channel;
 use WildPHP\Core\Commands\CommandHelp;
 use WildPHP\Core\Commands\CommandHandler;
@@ -25,9 +24,9 @@ class Aggregator
 	use ContainerTrait;
 
 	/**
-	 * @var SourcePool
+	 * @var SourceDictionary
 	 */
-	protected $sourcePool = null;
+	protected $sourceDictionary = null;
 
 	/**
 	 * Aggregator constructor.
@@ -49,30 +48,30 @@ class Aggregator
 
 		$this->setContainer($container);
 
-		$sourcePool = new SourcePool($this);
-		$this->setSourcePool($sourcePool);
-		$sourcePool = $this->getSourcePool();
-		$sources = $sourcePool->findAllSources();
-		$sourcePool->loadAllSources($sources);
+		$sourceDictionary = new SourceDictionary($container);
+		$this->setSourceDictionary($sourceDictionary);
+		$sources = $sourceDictionary->findAllSources();
+		$sourceDictionary->loadSources($sources);
 
 		/** @var CommandHandler $commandHandler */
 		$commandHandler = CommandHandler::fromContainer($container);
-		$this->registerCommands($commandHandler, $sourcePool);
+		$this->registerCommands($commandHandler, $sourceDictionary);
 
-		EventEmitter::fromContainer($container)->on('telegram.commands.add', function (TGCommandHandler $commandHandler) use ($sourcePool)
-		{
-			$this->registerTGCommands($commandHandler, $sourcePool);
-		});
+		EventEmitter::fromContainer($container)
+			->on('telegram.commands.add', function (TGCommandHandler $commandHandler) use ($sourceDictionary)
+			{
+				$this->registerTGCommands($commandHandler, $sourceDictionary);
+			});
 	}
 
 	/**
 	 * @param CommandHandler $commandHandler
-	 * @param SourcePool $pool
+	 * @param SourceDictionary $pool
 	 */
-	public function registerCommands(CommandHandler $commandHandler, SourcePool $pool)
+	public function registerCommands(CommandHandler $commandHandler, SourceDictionary $pool)
 	{
 		/** @var array<string,IAggregatorSource> $sources */
-		$sources = $pool->getLoadedSources();
+		$sources = $pool->toArray();
 
 		foreach ($sources as $key => $source)
 		{
@@ -82,12 +81,12 @@ class Aggregator
 
 	/**
 	 * @param TGCommandHandler $commandHandler
-	 * @param SourcePool $pool
+	 * @param SourceDictionary $pool
 	 */
-	public function registerTGCommands(TGCommandHandler $commandHandler, SourcePool $pool)
+	public function registerTGCommands(TGCommandHandler $commandHandler, SourceDictionary $pool)
 	{
 		/** @var array<string,IAggregatorSource> $sources */
-		$sources = $pool->getLoadedSources();
+		$sources = $pool->toArray();
 
 		foreach ($sources as $key => $source)
 		{
@@ -105,11 +104,21 @@ class Aggregator
 	{
 		$originChannel = $source->getName();
 
-		$sourcePool = $this->getSourcePool();
-		$keys = $sourcePool->getSourceKeys();
+		$sourceDictionary = $this->getSourceDictionary();
+		$sources = $sourceDictionary->toArray();
+
+		$sourceStrings = [];
+		/**
+		 * @var string $key
+		 * @var IAggregatorSource $source
+		 */
+		foreach ($sources as $key => $source)
+		{
+			$sourceStrings[] = $key . ' (' . $source->getReadableName() . ')';
+		}
 
 		Queue::fromContainer($container)
-			->privmsg($originChannel, 'Available sources: ' . implode(', ', $keys));
+			->privmsg($originChannel, 'Available sources: ' . implode(', ', $sourceStrings));
 	}
 
 	/**
@@ -121,8 +130,8 @@ class Aggregator
 	 */
 	public function handleResult(Channel $channel, User $user, array $args, ComponentContainer $container, string $source)
 	{
-		$sourcePool = $this->getSourcePool();
-		$source = $sourcePool->getSource($source);
+		$sourceDictionary = $this->getSourceDictionary();
+		$source = $sourceDictionary[$source];
 
 		$params = implode(' ', $args);
 		$params = $this->parseParams($params);
@@ -166,8 +175,8 @@ class Aggregator
 	 */
 	public function handleTelegramResult(\Telegram $telegram, $chat_id, array $arguments, string $channel, string $username, string $source)
 	{
-		$sourcePool = $this->getSourcePool();
-		$source = $sourcePool->getSource($source);
+		$sourceDictionary = $this->getSourceDictionary();
+		$source = $sourceDictionary[$source];
 
 		if (!$source)
 			return;
@@ -234,6 +243,9 @@ class Aggregator
 	{
 		if (empty($results))
 			return null;
+
+		if (count($results) == 1)
+			return array_shift($results);
 
 		$results = array_reverse($results);
 
@@ -308,18 +320,18 @@ class Aggregator
 	}
 
 	/**
-	 * @param $sourcePool SourcePool
+	 * @param $sourceDictionary SourceDictionary
 	 */
-	public function setSourcePool(SourcePool $sourcePool)
+	public function setSourceDictionary(SourceDictionary $sourceDictionary)
 	{
-		$this->sourcePool = $sourcePool;
+		$this->sourceDictionary = $sourceDictionary;
 	}
 
 	/**
-	 * @return SourcePool
+	 * @return SourceDictionary
 	 */
-	public function getSourcePool(): SourcePool
+	public function getSourceDictionary(): SourceDictionary
 	{
-		return $this->sourcePool;
+		return $this->sourceDictionary;
 	}
 }

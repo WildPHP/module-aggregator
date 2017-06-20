@@ -107,4 +107,20 @@ class AUR implements IAggregatorSource
 			return false;
 		}
 	}
+
+	/**
+     * @return string
+     */
+	public function getDescription(): string
+	{
+		return 'Search the Arch User Repository (AUR).';
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReadableName(): string
+	{
+		return 'Arch User Repository';
+	}
 }

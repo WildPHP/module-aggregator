@@ -121,4 +121,20 @@ class ArchPkg implements IAggregatorSource
 			return false;
 		}
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getDescription(): string
+	{
+		return 'Search the Arch Linux package database for a given package.';
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReadableName(): string
+	{
+		return 'Arch Linux Package Database';
+	}
 }

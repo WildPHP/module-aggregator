@@ -16,4 +16,14 @@ interface IAggregatorSource
 	 * @return false|SearchResult[]
 	 */
 	public function find(string $searchTerm);
+
+	/**
+	 * @return string
+	 */
+	public function getDescription(): string;
+
+	/**
+	 * @return string
+	 */
+	public function getReadableName(): string;
 }
