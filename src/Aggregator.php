@@ -9,6 +9,8 @@
 
 namespace WildPHP\Modules\Aggregator;
 
+use unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
+use unreal4u\TelegramAPI\TgLog;
 use WildPHP\Core\Channels\Channel;
 use WildPHP\Core\Commands\CommandHelp;
 use WildPHP\Core\Commands\CommandHandler;
@@ -18,6 +20,7 @@ use WildPHP\Core\ContainerTrait;
 use WildPHP\Core\EventEmitter;
 use WildPHP\Core\Users\User;
 use WildPHP\Modules\TGRelay\TGCommandHandler;
+use WildPHP\Modules\TGRelay\TGRelay;
 
 class Aggregator
 {
@@ -166,14 +169,14 @@ class Aggregator
 	}
 
 	/**
-	 * @param string $source
-	 * @param \Telegram $telegram
+	 * @param TgLog $telegram
 	 * @param mixed $chat_id
 	 * @param array $arguments
 	 * @param string $channel
 	 * @param string $username
+	 * @param string $source
 	 */
-	public function handleTelegramResult(\Telegram $telegram, $chat_id, array $arguments, string $channel, string $username, string $source)
+	public function handleTelegramResult(TgLog $telegram, $chat_id, array $arguments, string $channel, string $username, string $source)
 	{
 		$sourceDictionary = $this->getSourceDictionary();
 		$source = $sourceDictionary[$source];
@@ -187,13 +190,19 @@ class Aggregator
 
 		if ($results === false)
 		{
-			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'An error occurred while searching. Please try again later.']);
+			$sendMessage = new SendMessage();
+			$sendMessage->chat_id = $chat_id;
+			$sendMessage->text = 'An error occurred while searching. Please try again later.';
+			$telegram->performApiRequest($sendMessage);
 
 			return;
 		}
 		elseif (empty($results))
 		{
-			$telegram->sendMessage(['chat_id' => $chat_id, 'text' => 'I had no results for that query.']);
+			$sendMessage = new SendMessage();
+			$sendMessage->chat_id = $chat_id;
+			$sendMessage->text = 'I had no matches for that query.';
+			$telegram->performApiRequest($sendMessage);
 
 			return;
 		}
@@ -203,12 +212,15 @@ class Aggregator
 		if (!empty($params['user']))
 			$string = $params['user'] . ': ' . $string;
 
-		$telegram->sendMessage(['chat_id' => $chat_id, 'text' => $string]);
+		$sendMessage = new SendMessage();
+		$sendMessage->chat_id = $chat_id;
+		$sendMessage->text = $string;
+		$telegram->performApiRequest($sendMessage);
 
 		if (!empty($channel))
 		{
 			Queue::fromContainer($this->getContainer())
-				->privmsg($channel, '[TG] ' . $username . ' searched for "' . $params['search'] . '". Result:');
+				->privmsg($channel, '[TG] ' . TGRelay::colorNickname($username) . ' searched for "' . $params['search'] . '". Result:');
 			Queue::fromContainer($this->getContainer())
 				->privmsg($channel, $string);
 		}
