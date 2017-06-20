@@ -225,42 +225,6 @@ class Aggregator
 	}
 
 	/**
-	 * @param string $command
-	 * @param Channel $source
-	 * @param User $user
-	 * @param array $args
-	 * @param ComponentContainer $container
-	 */
-	public function keywordListener(string $command, Channel $source, User $user, array $args, ComponentContainer $container)
-	{
-		$sourcePool = $this->getSourcePool();
-		$originChannel = $source->getName();
-
-		if (!$sourcePool->sourceKeyExists($command))
-			return;
-
-		$args = implode(' ', $args);
-		$paramData = $this->parseParams($args);
-
-		if (empty($paramData))
-		{
-			Queue::fromContainer($container)
-				->privmsg($originChannel,
-					'Invalid parameters. Usage: ' . $command . ' [search term] (@ [user])');
-
-			return;
-		}
-
-		$this->handleResult(
-			$command,
-			$paramData['search'],
-			$originChannel,
-			$paramData['user'],
-			$container
-		);
-	}
-
-	/**
 	 * @param string $comparedTo
 	 * @param SearchResult[] $results
 	 *
