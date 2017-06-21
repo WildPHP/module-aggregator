@@ -23,7 +23,7 @@ use WildPHP\Modules\Aggregator\SearchResult;
 
 class UrbanDictionary implements IAggregatorSource
 {
-	protected $apiUri = 'http://api.urbandictionary.com/v0/';
+	protected $apiUri = 'https://api.urbandictionary.com/v0/';
 
 	/**
 	 * @param string $searchterm
