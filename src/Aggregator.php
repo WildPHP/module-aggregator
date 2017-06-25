@@ -74,7 +74,7 @@ class Aggregator
 	public function registerCommands(CommandHandler $commandHandler, SourceDictionary $pool)
 	{
 		/** @var array<string,IAggregatorSource> $sources */
-		$sources = $pool->toArray();
+		$sources = $pool->getArrayCopy();
 
 		foreach ($sources as $key => $source)
 		{
@@ -89,7 +89,7 @@ class Aggregator
 	public function registerTGCommands(TGCommandHandler $commandHandler, SourceDictionary $pool)
 	{
 		/** @var array<string,IAggregatorSource> $sources */
-		$sources = $pool->toArray();
+		$sources = $pool->getArrayCopy();
 
 		foreach ($sources as $key => $source)
 		{
@@ -108,7 +108,7 @@ class Aggregator
 		$originChannel = $source->getName();
 
 		$sourceDictionary = $this->getSourceDictionary();
-		$sources = $sourceDictionary->toArray();
+		$sources = $sourceDictionary->getArrayCopy();
 
 		$sourceStrings = [];
 		/**

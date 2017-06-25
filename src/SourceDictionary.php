@@ -9,13 +9,13 @@
 
 namespace WildPHP\Modules\Aggregator;
 
-use Collections\Dictionary;
+use WildPHP\Core\Collection;
 use WildPHP\Core\ComponentContainer;
 use WildPHP\Core\Configuration\Configuration;
 use WildPHP\Core\ContainerTrait;
 use WildPHP\Core\Logger\Logger;
 
-class SourceDictionary extends Dictionary
+class SourceDictionary extends Collection
 {
 	use ContainerTrait;
 
@@ -27,7 +27,7 @@ class SourceDictionary extends Dictionary
 	public function __construct(ComponentContainer $container)
 	{
 		$this->setContainer($container);
-		parent::__construct();
+		parent::__construct(IAggregatorSource::class);
 	}
 
 	/**
