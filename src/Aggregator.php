@@ -212,10 +212,13 @@ class Aggregator
 		if (!empty($params['user']))
 			$string = $params['user'] . ': ' . $string;
 
-		$sendMessage = new SendMessage();
-		$sendMessage->chat_id = $chat_id;
-		$sendMessage->text = $string;
-		$telegram->performApiRequest($sendMessage);
+		if (empty($channel))
+		{
+			$sendMessage = new SendMessage();
+			$sendMessage->chat_id = $chat_id;
+			$sendMessage->text = $string;
+			$telegram->performApiRequest($sendMessage);
+		}
 
 		if (!empty($channel))
 		{
