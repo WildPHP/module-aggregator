@@ -36,9 +36,7 @@ class SourceDictionary extends Collection
 	 */
 	public function findAllSources()
 	{
-		$allSources = Configuration::fromContainer($this->getContainer())
-			->get('aggregator.sources')
-			->getValue();
+		$allSources = Configuration::fromContainer($this->getContainer())['aggregator']['sources'];
 
 		$validSources = [];
 		foreach ($allSources as $key => $source)
