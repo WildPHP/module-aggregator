@@ -12,15 +12,16 @@ namespace WildPHP\Modules\Aggregator;
 use unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
 use unreal4u\TelegramAPI\TgLog;
 use WildPHP\Core\Channels\Channel;
-use WildPHP\Core\Commands\CommandHelp;
 use WildPHP\Core\Commands\CommandHandler;
+use WildPHP\Core\Commands\CommandHelp;
 use WildPHP\Core\ComponentContainer;
+use WildPHP\Core\Connection\IRCMessages\PRIVMSG;
 use WildPHP\Core\Connection\Queue;
+use WildPHP\Core\Connection\TextFormatter;
 use WildPHP\Core\ContainerTrait;
 use WildPHP\Core\EventEmitter;
 use WildPHP\Core\Users\User;
 use WildPHP\Modules\TGRelay\TGCommandHandler;
-use WildPHP\Modules\TGRelay\TGRelay;
 
 class Aggregator
 {
@@ -222,8 +223,10 @@ class Aggregator
 
 		if (!empty($channel))
 		{
+			$privmsg = new PRIVMSG($channel, '[TG] ' . TextFormatter::consistentStringColor($username) . ' searched for "' . $params['search'] . '". Result:');
+			$privmsg->setMessageParameters(['relay_ignore']);
 			Queue::fromContainer($this->getContainer())
-				->privmsg($channel, '[TG] ' . TGRelay::colorNickname($username) . ' searched for "' . $params['search'] . '". Result:');
+				->insertMessage($privmsg);
 			Queue::fromContainer($this->getContainer())
 				->privmsg($channel, $string);
 		}
