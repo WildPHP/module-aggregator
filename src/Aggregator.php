@@ -20,10 +20,11 @@ use WildPHP\Core\Connection\Queue;
 use WildPHP\Core\Connection\TextFormatter;
 use WildPHP\Core\ContainerTrait;
 use WildPHP\Core\EventEmitter;
+use WildPHP\Core\Modules\BaseModule;
 use WildPHP\Core\Users\User;
 use WildPHP\Modules\TGRelay\TGCommandHandler;
 
-class Aggregator
+class Aggregator extends BaseModule
 {
 	use ContainerTrait;
 
