@@ -138,6 +138,9 @@ class Aggregator extends BaseModule
 		$sourceDictionary = $this->getSourceDictionary();
 		$source = $sourceDictionary[$source];
 
+		if (!$source || empty($arguments))
+			return;
+
 		$params = implode(' ', $args);
 		$params = $this->parseParams($params);
 		$search = $params['search'];
@@ -183,7 +186,7 @@ class Aggregator extends BaseModule
 		$sourceDictionary = $this->getSourceDictionary();
 		$source = $sourceDictionary[$source];
 
-		if (!$source)
+		if (!$source || empty($arguments))
 			return;
 
 		$params = implode(' ', $arguments);
