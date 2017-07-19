@@ -212,6 +212,10 @@ class Aggregator extends BaseModule
 			return;
 		}
 		$result = $this->getBestResult($params['search'], $results);
+
+		if (empty($result))
+			return;
+
 		$string = $this->createSearchResultString($result);
 
 		if (!empty($params['user']))
