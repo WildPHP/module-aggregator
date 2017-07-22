@@ -60,6 +60,7 @@ class SourceDictionary extends Collection
 		$loadedSources = [];
 		foreach ($sources as $key => $source)
 		{
+			
 			if (!($source = $this->loadSource($source, $key)))
 				continue;
 

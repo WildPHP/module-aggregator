@@ -360,4 +360,12 @@ class Aggregator extends BaseModule
 	{
 		return $this->sourceDictionary;
 	}
+
+	/**
+	 * @return string
+	 */
+	public static function getSupportedVersionConstraint(): string
+	{
+		return '^3.0.0';
+	}
 }
