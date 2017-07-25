@@ -42,12 +42,12 @@ class Aggregator extends BaseModule
 	{
 		// Register our command.
 		$commandHelp = new CommandHelp();
-		$commandHelp->addPage('Search for a keyword using an online source. Usage: find [source] [keyword or phrase]');
+		$commandHelp->append('Search for a keyword using an online source. Usage: find [source] [keyword or phrase]');
 		CommandHandler::fromContainer($container)
 			->registerCommand('find', [$this, 'findCommand'], $commandHelp, 2, -1);
 
 		$commandHelp = new CommandHelp();
-		$commandHelp->addPage('Lists all available data sources. No parameters.');
+		$commandHelp->append('Lists all available data sources. No parameters.');
 		CommandHandler::fromContainer($container)
 			->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp, 0, 0);
 
