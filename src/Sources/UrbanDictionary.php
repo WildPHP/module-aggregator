@@ -6,13 +6,6 @@
  * See the LICENSE file for more information.
  */
 
-/**
- * Created by PhpStorm.
- * User: rick2
- * Date: 20-6-2017
- * Time: 15:37
- */
-
 namespace WildPHP\Modules\Aggregator\Sources;
 
 
