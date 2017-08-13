@@ -50,7 +50,7 @@ class UrbanDictionary implements IAggregatorSource
 			$topResultNetto = $netto;
 		}
 
-		return [$topResult];
+		return $topResult ? [$topResult] : [];
 	}
 
 	/**
