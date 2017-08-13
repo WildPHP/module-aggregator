@@ -313,9 +313,14 @@ class Aggregator extends BaseModule
 		$str = $searchResult->getTitle();
 		$str .= ' - ';
 
-		if ($searchResult->getDescription())
+		if (($description = $searchResult->getDescription()))
 		{
-			$str .= $searchResult->getDescription();
+			$description = str_replace("\n", ' ', str_replace("\r", "\n", $description));
+			
+			if (strlen($description > 150))
+				$str .= substr($description, 0, 150) . '...';
+			else
+				$str .= $description;
 			$str .= ' - ';
 		}
 
