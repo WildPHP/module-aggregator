@@ -317,10 +317,14 @@ class Aggregator extends BaseModule
 		{
 			$description = str_replace("\n", ' ', str_replace("\r", "\n", $description));
 			
-			if (strlen($description) > 150)
-				$str .= substr($description, 0, 150) . '...';
+			if (strlen($description) > 200)
+			{
+				$description = wordwrap($description, 200);
+				$str = explode("\n", $description)[0] . '...';
+			}
 			else
 				$str .= $description;
+			
 			$str .= ' - ';
 		}
 
