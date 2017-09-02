@@ -12,8 +12,11 @@ namespace WildPHP\Modules\Aggregator;
 use unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
 use unreal4u\TelegramAPI\TgLog;
 use WildPHP\Core\Channels\Channel;
+use WildPHP\Core\Commands\Command;
 use WildPHP\Core\Commands\CommandHandler;
 use WildPHP\Core\Commands\CommandHelp;
+use WildPHP\Core\Commands\ParameterStrategy;
+use WildPHP\Core\Commands\StringParameter;
 use WildPHP\Core\ComponentContainer;
 use WildPHP\Core\Connection\IRCMessages\PRIVMSG;
 use WildPHP\Core\Connection\Queue;
@@ -40,16 +43,26 @@ class Aggregator extends BaseModule
 	 */
 	public function __construct(ComponentContainer $container)
 	{
-		// Register our command.
-		$commandHelp = new CommandHelp();
-		$commandHelp->append('Search for a keyword using an online source. Usage: find [source] [keyword or phrase]');
-		CommandHandler::fromContainer($container)
-			->registerCommand('find', [$this, 'findCommand'], $commandHelp, 2, -1);
+		$commandHandler = CommandHandler::fromContainer($container);
 
-		$commandHelp = new CommandHelp();
-		$commandHelp->append('Lists all available data sources. No parameters.');
-		CommandHandler::fromContainer($container)
-			->registerCommand('lssources', [$this, 'lssourcesCommand'], $commandHelp, 0, 0);
+		$commandHandler->registerCommand('find', new Command(
+			[$this, 'findCommand'],
+			new ParameterStrategy(2, -1, [
+				'source' => new StringParameter(),
+				'input' => new StringParameter()
+			], true),
+			new CommandHelp([
+				'Search for a keyword using an online source. Usage: find [source] [keyword or phrase]'
+			])
+		));
+
+		$commandHandler->registerCommand('lssources', new Command(
+			[$this, 'lssourcesCommand'],
+			new ParameterStrategy(0, 0),
+			new CommandHelp([
+				'Lists all available data sources. No parameters.'
+			])
+		), ['lss']);
 
 		$this->setContainer($container);
 
@@ -59,7 +72,6 @@ class Aggregator extends BaseModule
 		$sourceDictionary->loadSources($sources);
 
 		/** @var CommandHandler $commandHandler */
-		$commandHandler = CommandHandler::fromContainer($container);
 		$this->registerCommands($commandHandler, $sourceDictionary);
 
 		EventEmitter::fromContainer($container)
@@ -80,7 +92,12 @@ class Aggregator extends BaseModule
 
 		foreach ($sources as $key => $source)
 		{
-			$commandHandler->registerCommand($key, [$this, 'handleResult'], null, 0, 3);
+			$commandHandler->registerCommand($key, new Command(
+				[$this, 'handleResult'],
+				new ParameterStrategy(1, -1, [
+					'input' => new StringParameter()
+				], true)
+			));
 		}
 	}
 
@@ -95,7 +112,12 @@ class Aggregator extends BaseModule
 
 		foreach ($sources as $key => $source)
 		{
-			$commandHandler->registerCommand($key, [$this, 'handleTelegramResult'], null, 0, 3);
+			$commandHandler->registerCommand($key, new Command(
+				[$this, 'handleTelegramResult'],
+				new ParameterStrategy(1, -1, [
+					'input' => new StringParameter()
+				], true)
+			));
 		}
 	}
 
@@ -248,12 +270,12 @@ class Aggregator extends BaseModule
 	 */
 	public function findCommand(Channel $channel, User $user, array $args, ComponentContainer $container)
 	{
-		$source = array_shift($args);
+		$source = $args['source'];
 
 		$this->handleResult(
 			$channel,
 			$user,
-			$args,
+			explode(' ', $args['input']),
 			$container,
 			$source
 		);
