@@ -163,7 +163,7 @@ class Aggregator extends BaseModule
 		if (!$source || empty($args))
 			return;
 
-		$params = implode(' ', $args);
+		$params = $args['input'];
 		$params = $this->parseParams($params);
 		$search = $params['search'];
 
@@ -211,7 +211,7 @@ class Aggregator extends BaseModule
 		if (!$source || empty($arguments))
 			return;
 
-		$params = implode(' ', $arguments);
+		$params = $arguments['input'];
 		$params = $this->parseParams($params);
 		$results = $source->find($params['search']);
 
@@ -275,7 +275,7 @@ class Aggregator extends BaseModule
 		$this->handleResult(
 			$channel,
 			$user,
-			explode(' ', $args['input']),
+			$args,
 			$container,
 			$source
 		);
