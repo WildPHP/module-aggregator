@@ -64,6 +64,7 @@ class SourceDictionary extends Collection
 			if (!($source = $this->loadSource($source, $key)))
 				continue;
 
+			/** @var $source IAggregatorSource */
 			$this->offsetSet($key, $source);
 			$loadedSources[$key] = $source;
 
